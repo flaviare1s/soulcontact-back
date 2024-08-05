@@ -3,6 +3,7 @@ import { config } from "dotenv"
 config()
 import mongoose from "mongoose"
 import { Contato } from "./models/contato.js"
+import { contatoValidation } from "./utils/validations.js"
 
 mongoose.connect(process.env.MONGODB_URL)
 .then(() => {
@@ -16,7 +17,14 @@ app.use(express.json())
 
 // INSERÇÃO DE CONTATO [POST]
 app.post('/contatos', async (req, res) => {
-  const { nome, sobrenome, email, telefone, observacoes, favorito } = req.body
+  const { error, value } = contatoValidation.validate(req.body, { abortEarly: false })
+
+  if (error) {
+    res.status(400).json({message: 'Dados inválidos', error: error.details})
+    return
+  }
+
+  const { nome, sobrenome, email, telefone, observacoes, favorito } = value
 
   try {
     const novoContato = new Contato({nome, sobrenome, email, telefone, observacoes, favorito})
